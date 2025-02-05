@@ -31,6 +31,9 @@
 #include <include/impl/hex_impl.h>
 
 namespace HX {
+/**
+ * Create the theme for HiEasyX
+ */
 void CreateTheme();
 
 /**
@@ -48,10 +51,12 @@ HXString GetLastError();
 /**
  * Creating a window, and select it into the working window,
  * the window will locate at the origin point by default. The
- * size of the window by default is 100x200
+ * size of the window by default is 200x300
  * @param Title The title of the window
+ * @param Folded Whether the window is folded, setting as true to fold the window
+ * @param Size The size of the window
  */
-void Window(const HXString &Title);
+void Window(const HXString &Title, bool Folded = false, HXPoint Size = {200, 300});
 
 /**
  * Relocating the window
@@ -63,8 +68,9 @@ void Button(const HXString &Title);
 
 /**
  * Init the HiEasyX UI, preparing for UI layout
+ * @param RenderContext The context for rendering
  */
-void Begin();
+void Begin(HXContext *RenderContext);
 
 /**
  * End the UI layout progress

@@ -30,6 +30,8 @@
 #include <include/hex_geo.h>
 #include <include/font/hex_font.h>
 
+#include <vector>
+
 #undef DrawText
 
 /**
@@ -77,11 +79,25 @@ public:
 	virtual void DrawFilledRectangle(HXRect Rect, HXColor Color, HXColor FillColor) = 0;
 
 	/**
+	 * Drawing a filled polygon
+	 * @param Points Points of the polygon
+	 * @param Color The color to fill the polygon
+	 */
+	virtual void DrawFilledPolygon(std::vector<HXPoint> Points, HXColor Color) = 0;
+
+	/**
 	 * Drawing a rectangle on the buffer
 	 * @param Rect The rectangle to be drawn
 	 * @param Color The color of the rectangle
 	 */
 	virtual void DrawRectangle(HXRect Rect, HXColor Color) = 0;
+
+	/**
+	 * Drawing a painter to this painter
+	 * @param Painter The painter to be drawn on this painter
+	 * @param Where Where to draw the painter
+	 */
+	virtual void DrawPainter(HXBufferPainter *Painter, HXPoint Where) = 0;
 
 	/**
 	 * Drawing the text on the buffer
@@ -97,7 +113,7 @@ public:
 	 * Clearing the painter with specified color
 	 * @param Color The color for clearing
 	 */
-	virtual void Clear(HXColor Color);
+	virtual void Clear(HXColor Color) = 0;
 
 	/**
 	 * Measuring the specified text
@@ -121,12 +137,19 @@ public:
 
 public:
 	/**
-	 * Creating a sub painter of the
+	 * Creating a sub painter
 	 * @param Width The width of the sub buffer painter
 	 * @param Height The height of the sub buffer painter
 	 * @return The buffer painter pointer
 	 */
 	virtual HXBufferPainter *CreateSubPainter(HXGInt Width, HXGInt Height) = 0;
+
+	/**
+	 * Creating the buffer painter from a buffer pointer
+	 * @param Buffer The buffer to be drawn
+	 * @return The buffer painter to be drawn
+	 */
+	virtual HXBufferPainter *CreateFromBuffer(void *Buffer) = 0;
 };
 
 /**
@@ -134,7 +157,7 @@ public:
  */
 HX_IMPL_API class HXContext {
 public:
-	virtual ~HXContext() = 0;
+	virtual ~HXContext() = default;
 
 public:
 	/**

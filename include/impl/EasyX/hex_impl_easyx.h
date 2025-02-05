@@ -61,7 +61,11 @@ public:
 
 	void DrawFilledRectangle(HXRect Rect, HXColor Color, HXColor FillColor) override;
 
+	void DrawPainter(HXBufferPainter *Painter, HXPoint Where) override;
+
 	void DrawText(const HXString &Text, HXFont Font, HXPoint Where, HXColor Color, HXGUInt Height) override;
+
+	void DrawFilledPolygon(std::vector<HXPoint> Points, HXColor Color) override;
 
 	void Clear(HXColor Color) override;
 
@@ -69,6 +73,10 @@ public:
 
 public:
 	HXBufferPainter *CreateSubPainter(HXGInt Width, HXGInt Height) override;
+
+	HXBufferPainter *CreateFromBuffer(void *Buffer) override;
+
+public:
 
 	void Begin() override;
 

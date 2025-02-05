@@ -11,11 +11,12 @@ int main() {
 	HXMessageSenderImpl sender;
 	HXContextImpl		context;
 
-	setbkcolor(RGB(21, 22, 23));
-
 	BeginBatchDraw();
 
+	HX::CreateTheme();
+
 	while (true) {
+		setbkcolor(RGB(0, 129, 129));
 		cleardevice();
 
 		ExMessage message;
@@ -23,8 +24,9 @@ int main() {
 
 		}
 
-		HX::Begin();
+		HX::Begin(&context);
 
+		HX::Window("Hello World");
 
 		HX::End();
 

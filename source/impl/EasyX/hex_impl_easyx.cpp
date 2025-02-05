@@ -25,9 +25,11 @@
  * \brief The HiEasyX impl of the EasyX
  */
 
+#include <algorithm>
 #include <include/impl/EasyX/hex_impl_easyx.h>
 
 #include <graphics.h>
+#include <iterator>
 
 namespace HX {
 void *GetHXBuffer(IMAGE *Buffer) {
@@ -64,6 +66,10 @@ void HXBufferPainterImpl::DrawFilledRectangle(HXRect Rect, HXColor Color, HXColo
 
 	solidrectangle(Rect.Left, Rect.Top, Rect.Right, Rect.Bottom);
 	rectangle(Rect.Left, Rect.Top, Rect.Right, Rect.Bottom);
+}
+
+void HXBufferPainterImpl::DrawPainter(HXBufferPainter *Painter, HXPoint Where) {
+	putimage(Where.X, Where.Y, static_cast<HXBufferPainterImpl*>(Painter)->_buffer);
 }
 
 void HXBufferPainterImpl::SetupEasyXFont(HXFont Font, HXGUInt Height) {
@@ -108,6 +114,18 @@ void HXBufferPainterImpl::DrawText(const HXString &Text, HXFont Font, HXPoint Wh
 	outtextxy(Where.X, Where.Y, Text.c_str());
 }
 
+void HXBufferPainterImpl::DrawFilledPolygon(std::vector<HXPoint> Points, HXColor Color) {
+	setfillcolor(HXColorToEasyXColor(Color));
+
+	std::vector<POINT> points;
+	points.reserve(Points.size());
+	std::ranges::transform(Points, std::back_inserter(points), [](const HXPoint& Point) {
+		return POINT{static_cast<LONG>(Point.X), static_cast<LONG>(Point.Y)};
+	});
+
+	solidpolygon(points.data(), points.size());
+}
+
 HXRect HXBufferPainterImpl::MeasureText(const HXString &Text, HXFont Font, HXGUInt Height) {
 	SetupEasyXFont(Font, Height);
 
@@ -124,8 +142,14 @@ HXBufferPainter *HXBufferPainterImpl::CreateSubPainter(HXGInt Width, HXGInt Heig
 	return new HXExHostedBufferPainterImpl(Width, Height);
 }
 
+HXBufferPainter *HXBufferPainterImpl::CreateFromBuffer(void *Buffer) {
+	return new HXBufferPainterImpl(static_cast<IMAGE*>(Buffer));
+}
+
 void HXBufferPainterImpl::Begin() {
 	SetWorkingImage(_buffer);
+
+	setbkmode(TRANSPARENT);
 }
 
 void HXBufferPainterImpl::End() {

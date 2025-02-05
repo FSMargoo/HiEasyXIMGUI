@@ -62,6 +62,7 @@ struct HXWindow {
 	HXPoint                                     Where;
 	HXBufferPainter *                           Painter;
 	std::vector<std::map<HXString, HXControl> > Controls;
+	bool                                        Folded;
 
 	~HXWindow() {
 		delete Painter;
@@ -70,7 +71,11 @@ struct HXWindow {
 
 struct HXTheme {
 	HXColor WindowBackground;
+	HXColor WindowTitle;
+	HXColor WindowTitleBackground;
 };
+
+HXTheme Theme;
 
 /**
  * The runtime context, including all value for UI running
@@ -83,7 +88,6 @@ struct HXRuntimeContext {
 	HXString              LastError;
 	bool                  Initialized = false;
 	bool                  Win         = true;
-	HXTheme				  Theme;
 };
 
 namespace HX {
@@ -97,23 +101,40 @@ HXString GetLastError() {
 	return Context.LastError;
 }
 
-void Window(const HXString &Title) {
-	Context.Windows.push_back(HXWindow{.Title = Title, .Size = {100, 200}, .Where = HXPoint{0, 0}, .Controls{}});
-	Context.CurrentWindow          = &Context.Windows.back();
-	Context.CurrentWindow->Painter = Context.RenderContext->DefaultPainter()->CreateSubPainter(
-		Context.CurrentWindow->Size.X, Context.CurrentWindow->Size.Y);
+void Window(const HXString &Title, bool Folded, HXPoint Size) {
+	Context.Windows.push_back(HXWindow{.Title = Title, .Size = Size, .Where = HXPoint{0, 0}, .Controls{},
+	                                   .Folded = Folded});
+	Context.CurrentWindow = &Context.Windows.back();
 
+	if (Folded == true) {
+		Context.CurrentWindow->Painter = Context.RenderContext->DefaultPainter()->CreateSubPainter(
+			Context.CurrentWindow->Size.X, 40);
+	} else {
+		Context.CurrentWindow->Painter = Context.RenderContext->DefaultPainter()->CreateSubPainter(
+			Context.CurrentWindow->Size.X, Context.CurrentWindow->Size.Y);
+	}
+
+	// Draw Title Bar
 	Context.CurrentWindow->Painter->Begin();
-	Context.CurrentWindow->Painter->Clear(Context.Theme.WindowBackground);
+	Context.CurrentWindow->Painter->Clear(Theme.WindowBackground);
+	Context.CurrentWindow->Painter->DrawFilledRectangle({0, 0, Size.X, 40}, Theme.WindowTitleBackground,
+	                                                    Theme.WindowTitleBackground);
+	Context.CurrentWindow->Painter->DrawFilledPolygon({
+		                                                  {4, 15},
+		                                                  {16, 15},
+		                                                  {10, static_cast<HXGInt>(ceil(6 * sqrt(3) + 15))}
+	                                                  }, Theme.WindowTitle);
+	Context.CurrentWindow->Painter->DrawText(Title, HXFont{}, {20, 10}, Theme.WindowTitle, 20);
 	Context.CurrentWindow->Painter->End();
 }
 
-void Begin() {
+void Begin(HXContext *RenderContext) {
 	if (Context.Initialized) {
 		Context.Win       = false;
 		Context.LastError = "End is needed for another UI layout progress";
 	} else {
-		Context = HXRuntimeContext{};
+		Context               = HXRuntimeContext{};
+		Context.RenderContext = RenderContext;
 	}
 }
 
@@ -129,8 +150,19 @@ bool Wined() {
 	return Context.Win;
 }
 
-void Render() {
+void CreateTheme() {
+	Theme = HXTheme{
+		.WindowBackground = HXColor{21, 22, 23, 255},
+		.WindowTitle = HXColor{255, 255, 255, 255},
+		.WindowTitleBackground = HXColor{41, 74, 122, 255},
+	};
+}
 
+void Render() {
+	HXBufferPainter *Painter = Context.RenderContext->DefaultPainter()->CreateFromBuffer(Context.LocalBuffer);
+	for (const auto &window : Context.Windows) {
+		Painter->DrawPainter(window.Painter, window.Where);
+	}
 }
 
 }
