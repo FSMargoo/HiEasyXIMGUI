@@ -81,6 +81,7 @@ HXTheme Theme;
  * The runtime context, including all value for UI running
  */
 struct HXRuntimeContext {
+	std::vector<void*>	  MessageQuery;
 	std::vector<HXWindow> Windows;
 	HXWindow *            CurrentWindow = nullptr;
 	HXContext *           RenderContext = nullptr;
@@ -92,6 +93,7 @@ struct HXRuntimeContext {
 
 namespace HX {
 HXRuntimeContext Context;
+HXMessageSender *MsgSender;
 
 void SetBuffer(void *Buffer) {
 	Context.LocalBuffer = Buffer;
@@ -126,6 +128,18 @@ void Window(const HXString &Title, bool Folded, HXPoint Size) {
 	                                                  }, Theme.WindowTitle);
 	Context.CurrentWindow->Painter->DrawText(Title, HXFont{}, {20, 10}, Theme.WindowTitle, 20);
 	Context.CurrentWindow->Painter->End();
+}
+
+void MessageSender(HXMessageSender *Sender) {
+	MsgSender = Sender;
+	if (Sender == nullptr) {
+		Context.Win       = false;
+		Context.LastError = "Invalid message sender";
+	}
+}
+
+void PushMessage(void *Message) {
+	Context.MessageQuery.push_back(Message);
 }
 
 void Begin(HXContext *RenderContext) {

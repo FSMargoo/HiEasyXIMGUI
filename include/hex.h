@@ -73,6 +73,18 @@ void Button(const HXString &Title);
 void Begin(HXContext *RenderContext);
 
 /**
+ * Setting the message sender
+ * @param Sender The sender to be set
+ */
+void MessageSender(HXMessageSender *Sender);
+
+/**
+ * Pushing the message to the message query
+ * @param Message The message to be pushed
+ */
+void PushMessage(void *Message);
+
+/**
  * End the UI layout progress
  */
 void End();

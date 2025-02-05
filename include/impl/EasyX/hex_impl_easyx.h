@@ -113,25 +113,21 @@ private:
 	HXBufferPainterImpl *_defaultPainter;
 };
 
+namespace HX {
+/**
+ * Converting the EasyX message to the HX message format
+ * @param Message The message to be converted
+ * @return The converted HX message type
+ */
+void *GetHXMessage(ExMessage *Message);
+}
+
 class HXMessageSenderImpl : public HXMessageSender {
 public:
-	HXMessageSenderImpl();
+	HXMessageSenderImpl() = default;
 
 	~HXMessageSenderImpl() override = default;
 
 public:
-	void PushMessage(ExMessage Message);
-
-public:
-	bool End() override;
-
-	void Clear() override;
-
-	void Restore() override;
-
-	HXMessage Message() override;
-
-private:
-	std::vector<ExMessage> _message;
-	std::vector<ExMessage> _controlMessage;
+	HXMessage Message(void *Message) override;
 };

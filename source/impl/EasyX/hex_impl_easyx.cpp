@@ -69,7 +69,7 @@ void HXBufferPainterImpl::DrawFilledRectangle(HXRect Rect, HXColor Color, HXColo
 }
 
 void HXBufferPainterImpl::DrawPainter(HXBufferPainter *Painter, HXPoint Where) {
-	putimage(Where.X, Where.Y, static_cast<HXBufferPainterImpl*>(Painter)->_buffer);
+	putimage(Where.X, Where.Y, static_cast<HXBufferPainterImpl *>(Painter)->_buffer);
 }
 
 void HXBufferPainterImpl::SetupEasyXFont(HXFont Font, HXGUInt Height) {
@@ -119,7 +119,7 @@ void HXBufferPainterImpl::DrawFilledPolygon(std::vector<HXPoint> Points, HXColor
 
 	std::vector<POINT> points;
 	points.reserve(Points.size());
-	std::ranges::transform(Points, std::back_inserter(points), [](const HXPoint& Point) {
+	std::ranges::transform(Points, std::back_inserter(points), [](const HXPoint &Point) {
 		return POINT{static_cast<LONG>(Point.X), static_cast<LONG>(Point.Y)};
 	});
 
@@ -143,7 +143,7 @@ HXBufferPainter *HXBufferPainterImpl::CreateSubPainter(HXGInt Width, HXGInt Heig
 }
 
 HXBufferPainter *HXBufferPainterImpl::CreateFromBuffer(void *Buffer) {
-	return new HXBufferPainterImpl(static_cast<IMAGE*>(Buffer));
+	return new HXBufferPainterImpl(static_cast<IMAGE *>(Buffer));
 }
 
 void HXBufferPainterImpl::Begin() {
@@ -179,7 +179,7 @@ HXBufferPainter *HXContextImpl::DefaultPainter() {
 }
 
 HXBufferPainter *HXContextImpl::BufferToPainter(void *Buffer) {
-	return new HXBufferPainterImpl(static_cast<IMAGE*>(Buffer));
+	return new HXBufferPainterImpl(static_cast<IMAGE *>(Buffer));
 }
 
 HXBuffer *HXContextImpl::GetDeviceBuffer() {
@@ -189,51 +189,32 @@ HXBuffer *HXContextImpl::GetDeviceBuffer() {
 /////////////////////////////////////////////
 /// HXMessageSenderImpl
 
-HXMessageSenderImpl::HXMessageSenderImpl()
-	: _message() {
-}
-
-void HXMessageSenderImpl::PushMessage(ExMessage Message) {
-	_message.push_back(Message);
-	_controlMessage.push_back(Message);
-}
-
-bool HXMessageSenderImpl::End() {
-	return _controlMessage.empty();
-}
-
-void HXMessageSenderImpl::Restore() {
-	_controlMessage = _message;
-}
-
-void HXMessageSenderImpl::Clear() {
-	_message.clear();
-}
-
-HXMessage HXMessageSenderImpl::Message() {
-	if (_controlMessage.empty() && !_message.empty()) {
-		Restore();
-	}
-
-	HXMessage message;
-
-	auto exMessage = _controlMessage.back();
-	if (exMessage.message == WM_LBUTTONUP || exMessage.message == WM_MOUSEMOVE) {
+HXMessage HXMessageSenderImpl::Message(void *Message) {
+	HXMessage  message{};
+	ExMessage *exMessage = static_cast<ExMessage *>(Message);
+	if (exMessage->message == WM_LBUTTONDOWN || exMessage->message == WM_LBUTTONUP || exMessage->message ==
+	    WM_MOUSEMOVE) {
 		message.MouseAction = true;
-	} else {
-		message.MouseAction = false;
 	}
-
-	if (exMessage.message == WM_LBUTTONUP) {
-		message.MouseLeftClicked = true;
-	} else {
-		message.MouseLeftClicked = false;
+	if (exMessage->message == WM_LBUTTONDOWN) {
+		message.MouseLeftPressed = true;
 	}
-
-	message.MouseX = exMessage.x;
-	message.MouseY = exMessage.y;
-
-	_controlMessage.pop_back();
+	if (exMessage->message == WM_LBUTTONUP) {
+		message.MouseLeftRelease = true;
+	}
+	if (message.MouseAction) {
+		message.MouseX = exMessage->x;
+		message.MouseY = exMessage->y;
+	}
 
 	return message;
+}
+
+////////////////////////////////////////////
+/// Global
+
+namespace HX {
+void *GetHXMessage(ExMessage *Message) {
+	return static_cast<void *>(Message);
+}
 }

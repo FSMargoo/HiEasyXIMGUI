@@ -173,14 +173,19 @@ public:
 	 */
 	virtual HXBufferPainter *DefaultPainter() = 0;
 
+	/**
+	 * Get the buffer of the device
+	 * @return The buffer to the main device
+	 */
 	virtual HXBuffer *GetDeviceBuffer() = 0;
 };
 
 struct HXMessage {
-	bool   MouseLeftClicked;
-	bool   MouseAction;
-	HXGInt MouseX;
-	HXGInt MouseY;
+	bool   MouseLeftPressed = false;
+	bool   MouseLeftRelease = false;
+	bool   MouseAction      = false;
+	HXGInt MouseX           = 0;
+	HXGInt MouseY           = 0;
 };
 
 HX_IMPL_API class HXMessageSender {
@@ -188,16 +193,10 @@ public:
 	virtual ~HXMessageSender() = default;
 
 public:
-	static HXMessage SilentMessage() {
-		return HXMessage{.MouseLeftClicked = false, .MouseAction = false};
-	}
-
-public:
-	virtual void Clear() = 0;
-
-	virtual bool End() = 0;
-
-	virtual void Restore() = 0;
-
-	virtual HXMessage Message() = 0;
+	/**
+	 * Convert the message structure to the HiEasyX message structure
+	 * @param Message The message pointer to be translated
+	 * @return The message translated to the HiEasyX API
+	 */
+	virtual HXMessage Message(void *Message) = 0;
 };

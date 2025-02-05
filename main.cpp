@@ -14,14 +14,15 @@ int main() {
 	BeginBatchDraw();
 
 	HX::CreateTheme();
+	HX::MessageSender(&sender);
 
 	while (true) {
 		setbkcolor(RGB(0, 129, 129));
 		cleardevice();
 
-		ExMessage message;
+		ExMessage message{};
 		while (peekmessage(&message)) {
-
+			HX::PushMessage(HX::GetHXMessage(&message));
 		}
 
 		HX::Begin(&context);
