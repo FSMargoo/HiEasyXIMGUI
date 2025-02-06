@@ -29,12 +29,37 @@
 
 #include <include/hex_string.h>
 #include <include/impl/hex_impl.h>
+#include <include/hex_button.h>
+#include <include/hex_window.h>
+#include <include/hex_text.h>
+
+struct HXWindow;
+struct HXRuntimeContext;
+struct HXTheme;
 
 namespace HX {
+/**
+ * Get the runtime context of HiEasyX
+ * @return The runtime context of HiEasyX
+ */
+HXRuntimeContext &GetContext();
+
+/**
+ * Get the theme of the HiEasyX
+ * @return The theme of the HiEasyX
+ */
+HXTheme &GetTheme();
+
 /**
  * Create the theme for HiEasyX
  */
 void CreateTheme();
+
+/**
+ * Setting the API of the current OS
+ * @param API The API of the OS
+ */
+void OSAPI(HXOSOperation *API);
 
 /**
  * Setting the buffer where the rendering result will be displayed
@@ -47,83 +72,6 @@ void SetBuffer(void *Buffer);
  * @return The last error in string format
  */
 HXString GetLastError();
-
-/**
- * The profile for a window
- */
-struct WindowProfile {
-	HXPoint Size            = {300, 200};
-	HXPoint LastSize        = {0, 0};
-	HXPoint Position        = {0, 0};
-	bool    InDrag          = false;
-	bool    Folded          = false;
-	bool    InAllZoom       = false;
-	bool    InWidthZoom     = false;
-	bool    InHeightZoom    = false;
-	bool    InCursorStyling = false;
-	HXGInt  DeltaX          = 0;
-	HXGInt  DeltaY          = 0;
-	HXGInt  OriginX         = 0;
-	HXGInt  OriginY         = 0;
-};
-
-/**
- * Setting the API of the current OS
- * @param API The API of the OS
- */
-void OSAPI(HXOSOperation *API);
-
-/**
- * Creating a window, and select it into the working window,
- * the window will locate at the origin point by default.
- * @param Title The title of the window
- * @param Profile The profile for a window
- */
-void Window(const HXString &Title, WindowProfile &Profile);
-
-/**
- * The profile for a button
- */
-struct ButtonProfile {
-	bool OnHover   = false;
-	bool OnPressed = false;
-	// When the mouse button clicked down and didn't get up, OnHold
-	// will be true
-	bool    OnHold = false;
-	HXPoint Size   = {300, 200};
-};
-
-/**
- * Creating a button, the size of the button is determined by the length of the title
- * @param Title The title of the button
- * @param Profile The profile of the button
- * @return If the button was pressed, returning true, nor returning false
- */
-bool Button(const HXString &Title, ButtonProfile &Profile);
-
-/**
- * The profile for a text label
- */
-struct TextProfile {
-	HXFont  Font;
-	HXGInt  Height = 18;
-	HXColor Color;
-
-	TextProfile();
-};
-
-/**
- * Creating a text label
- * @param Title The title of the text
- */
-void Text(const HXString &Title);
-
-/**
- * Creating a text label with a text profile
- * @param Title The title of the text
- * @param Profile The pointer to the text profile
- */
-void Text(const HXString &Title, TextProfile &Profile);
 
 /**
  * Init the HiEasyX UI, preparing for UI layout
@@ -159,4 +107,83 @@ bool Wined();
  * Render the UI to the buffer
  */
 void Render();
+
+/**
+ * Clipping the coord into the relative coord
+ * @param Point The point needed to clip
+ * @return The clipped coord
+ */
+HXPoint ClipCoord(HXPoint Point);
 }
+
+/**
+ * The type of controls
+ */
+enum class HXControlType {
+	Button
+};
+
+/**
+ * The status of a control
+ */
+enum class HXControlStatus {
+	Button_Hovering
+};
+
+/**
+ * The structure to store controls
+ */
+struct HXControl {
+	HXControlType   Type;
+	HXString        Id;
+	HXControlStatus Status;
+};
+
+/**
+ * The structure to store window, including title, position and controls
+ */
+struct HXWindow {
+	HXString         Title;
+	HXPoint          Size;
+	HXPoint          Where;
+	HXBufferPainter *Painter;
+	bool             Folded;
+	HXGInt           BaseLine = 50;
+
+	~HXWindow() {
+		delete Painter;
+	}
+};
+
+/**
+ * The theme structure for HiEasyX
+ */
+struct HXTheme {
+	HXColor WindowBackground;
+	HXColor WindowTitleText;
+	HXColor WindowTitleBackground;
+	HXColor ButtonBorder;
+	HXColor ButtonBackground;
+	HXColor ButtonText;
+	HXColor ButtonOnHoverBorder;
+	HXColor ButtonOnHoverBackground;
+	HXColor ButtonOnHoverText;
+	HXColor ButtonPressedBorder;
+	HXColor ButtonPressedBackground;
+	HXColor ButtonPressedText;
+};
+
+/**
+ * The runtime context, including all value for UI running
+ */
+struct HXRuntimeContext {
+	std::vector<HXMessage>  MessageQuery;
+	std::vector<HXWindow *> Windows;
+	HXWindow *              CurrentWindow = nullptr;
+	HXContext *             RenderContext = nullptr;
+	HXOSOperation *         OSAPI         = nullptr;
+	void *                  LocalBuffer   = nullptr;
+	HXString                LastError;
+	bool                    Initialized = false;
+	bool                    Win         = true;
+};

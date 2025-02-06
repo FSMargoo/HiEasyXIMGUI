@@ -14,4 +14,10 @@ add_executable(HiEasyX main.cpp
         include/hex_string.h
         include/hex.h
         source/hex.cpp
+        source/hex_window.cpp
+        include/hex_window.h
+        include/hex_button.h
+        source/hex_button.cpp
+        include/hex_text.h
+        source/hex_text.cpp
 )
