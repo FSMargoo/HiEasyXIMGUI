@@ -41,6 +41,8 @@
 #undef DrawText
 
 namespace HX {
+void HXBegin();
+void HXInitForEasyX();
 void *GetHXBuffer(IMAGE *Buffer);
 }
 
@@ -67,6 +69,8 @@ public:
 
 	void DrawFilledPolygon(std::vector<HXPoint> Points, HXColor Color) override;
 
+	void DrawFilledRoundedRectangle(HXRect Rect, HXColor Color, HXColor FillColor, HXGInt Radius) override;
+
 	void Clear(HXColor Color) override;
 
 	HXRect MeasureText(const HXString &Text, HXFont Font, HXGUInt Height) override;
@@ -77,7 +81,6 @@ public:
 	HXBufferPainter *CreateFromBuffer(void *Buffer) override;
 
 public:
-
 	void Begin() override;
 
 	void End() override;

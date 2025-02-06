@@ -66,9 +66,51 @@ struct WindowProfile {
  * @param Title The title of the window
  * @param Profile The profile for a window
  */
-void Window(const HXString &Title, WindowProfile *Profile);
+void Window(const HXString &Title, WindowProfile &Profile);
 
-void Button(const HXString &Title);
+/**
+ * The profile for a button
+ */
+struct ButtonProfile {
+	bool OnHover   = false;
+	bool OnPressed = false;
+	// When the mouse button clicked down and didn't get up, OnHold
+	// will be true
+	bool    OnHold = false;
+	HXPoint Size   = {300, 200};
+};
+
+/**
+ * Creating a button, the size of the button is determined by the length of the title
+ * @param Title The title of the button
+ * @param Profile The profile of the button
+ * @return If the button was pressed, returning true, nor returning false
+ */
+bool Button(const HXString &Title, ButtonProfile &Profile);
+
+/**
+ * The profile for a text label
+ */
+struct TextProfile {
+	HXFont  Font;
+	HXGInt  Height = 18;
+	HXColor Color;
+
+	TextProfile();
+};
+
+/**
+ * Creating a text label
+ * @param Title The title of the text
+ */
+void Text(const HXString &Title);
+
+/**
+ * Creating a text label with a text profile
+ * @param Title The title of the text
+ * @param Profile The pointer to the text profile
+ */
+void Text(const HXString &Title, TextProfile &Profile);
 
 /**
  * Init the HiEasyX UI, preparing for UI layout

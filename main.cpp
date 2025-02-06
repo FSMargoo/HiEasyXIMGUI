@@ -8,23 +8,22 @@
 int main() {
 	initgraph(640, 480);
 
-	HXMessageSenderImpl sender;
-	HXContextImpl		context;
-
 	BeginBatchDraw();
 
-	HX::CreateTheme();
-	HX::MessageSender(&sender);
+	HX::HXInitForEasyX();
+	if (!HX::Wined()) {
+		printf("HX error : %s!", HX::GetLastError().c_str());
+
+		exit(-1);
+	}
 
 	HX::WindowProfile windowProfile;
-	HX::WindowProfile windowProfile2;
-	windowProfile2.Position = {300, 300};
 
 	while (true) {
 		setbkcolor(RGB(0, 129, 129));
 		cleardevice();
 
-		HX::Begin(&context);
+		HX::HXBegin();
 
 		// Begin to process the message
 		ExMessage message{};
@@ -32,30 +31,30 @@ int main() {
 			HX::PushMessage(HX::GetHXMessage(&message));
 		}
 
-		HX::Window("Hello World", &windowProfile);
-		HX::Window("Hello World 2", &windowProfile2);
+		HX::Window("Hello World", windowProfile);
+
+		static HX::ButtonProfile btnProfile{};
+		if (HX::Button("Hello World!", btnProfile)) {
+			HX::Text("You clicked the button!");
+		}
+		if (btnProfile.OnHold) {
+			auto profile        = HX::TextProfile{};
+			profile.Height      = 20;
+			profile.Color       = HXColor{255, 0, 0};
+			profile.Font.Style  = HXFontStyle::Black;
+			profile.Font.Family = "Times New Roman";
+			profile.Font.Italic = true;
+
+			HX::Text("You are holding the button!", profile);
+		}
+		if (btnProfile.OnHover) {
+			HX::Text("You are hovering the button!");
+		}
 
 		HX::End();
 
 		HX::SetBuffer(HX::GetHXBuffer(GetWorkingImage()));
 		HX::Render();
-
-		if (windowProfile.InDrag) {
-			settextcolor(GREEN);
-			outtextxy(100, 100, "窗口正在被拖动");
-		}
-		else {
-			settextcolor(RED);
-			outtextxy(100, 100, "窗口没有被拖动");
-		}
-		if (windowProfile.Folded) {
-			settextcolor(GREEN);
-			outtextxy(100, 140, "窗口被折叠");
-		}
-		else {
-			settextcolor(RED);
-			outtextxy(100, 140, "窗口展开");
-		}
 
 		_flushall();
 

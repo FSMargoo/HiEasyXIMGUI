@@ -79,6 +79,15 @@ public:
 	virtual void DrawFilledRectangle(HXRect Rect, HXColor Color, HXColor FillColor) = 0;
 
 	/**
+	 * Drawing a filled rounded rectangle on the buffer
+	 * @param Rect The rectangle to be drawn
+	 * @param Color The color of the rectangle
+	 * @param FillColor The color to fill the rectangle
+	 * @param Radius The radius of the rectangle border
+	 */
+	virtual void DrawFilledRoundedRectangle(HXRect Rect, HXColor Color, HXColor FillColor, HXGInt Radius) = 0;
+
+	/**
 	 * Drawing a filled polygon
 	 * @param Points Points of the polygon
 	 * @param Color The color to fill the polygon

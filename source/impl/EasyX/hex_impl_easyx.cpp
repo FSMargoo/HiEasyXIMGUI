@@ -32,6 +32,21 @@
 #include <iterator>
 
 namespace HX {
+void Begin(HXContext *RenderContext);
+
+void HXBegin() {
+	static HXContextImpl context;
+	Begin(&context);
+}
+
+void MessageSender(HXMessageSender *Sender);
+void CreateTheme();
+void HXInitForEasyX() {
+	HXMessageSenderImpl *sender = new HXMessageSenderImpl;
+	MessageSender(sender);
+
+	CreateTheme();
+}
 void *GetHXBuffer(IMAGE *Buffer) {
 	return static_cast<void *>(Buffer);
 }
@@ -124,6 +139,13 @@ void HXBufferPainterImpl::DrawFilledPolygon(std::vector<HXPoint> Points, HXColor
 	});
 
 	solidpolygon(points.data(), points.size());
+}
+
+void HXBufferPainterImpl::DrawFilledRoundedRectangle(HXRect Rect, HXColor Color, HXColor FillColor, HXGInt Radius) {
+	setlinecolor(HXColorToEasyXColor(Color));
+	setfillcolor(HXColorToEasyXColor(FillColor));
+
+	fillroundrect(Rect.Left, Rect.Top, Rect.Right, Rect.Bottom, Radius, Radius);
 }
 
 HXRect HXBufferPainterImpl::MeasureText(const HXString &Text, HXFont Font, HXGUInt Height) {
