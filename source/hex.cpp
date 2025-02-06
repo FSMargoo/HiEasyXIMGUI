@@ -82,7 +82,7 @@ HXTheme Theme;
  */
 struct HXRuntimeContext {
 	std::vector<HXMessage> MessageQuery;
-	std::vector<HXWindow>  Windows;
+	std::vector<HXWindow*> Windows;
 	HXWindow *             CurrentWindow = nullptr;
 	HXContext *            RenderContext = nullptr;
 	void *                 LocalBuffer   = nullptr;
@@ -108,9 +108,10 @@ HXString GetLastError() {
 }
 
 void Window(const HXString &Title, WindowProfile *Profile) {
-	Context.Windows.push_back(HXWindow{.Title = Title, .Size = Profile->Size, .Where = HXPoint{0, 0}, .Controls{},
-	                                   .Folded = Profile->Folded});
-	Context.CurrentWindow = &Context.Windows.back();
+	auto ptr = new HXWindow{.Title = Title, .Size = Profile->Size, .Where = HXPoint{0, 0}, .Controls{},
+									   .Folded = Profile->Folded};
+	Context.Windows.emplace_back(ptr);
+	Context.CurrentWindow = Context.Windows.back();
 
 	Context.CurrentWindow->Where = Profile->Position;
 
@@ -129,6 +130,9 @@ void Window(const HXString &Title, WindowProfile *Profile) {
 
 	// Judge the window drag
 	for (auto &Message : Context.MessageQuery) {
+		if (Message.Processed) {
+			continue;
+		}
 		if (Message.MouseLeftPressed &&
 		    Message.MouseX >= windowBarRectangle.Left && Message.MouseX <= windowBarRectangle.Right &&
 		    Message.MouseY >= windowBarRectangle.Top && Message.MouseY <= windowBarRectangle.Bottom) {
@@ -142,12 +146,18 @@ void Window(const HXString &Title, WindowProfile *Profile) {
 
 				Profile->InDrag = true;
 			}
+
+			Message.Processed = true;
 		}
 		else if (Message.MouseLeftRelease && Profile->InDrag) {
+			Message.Processed = true;
+
 			Profile->InDrag = false;
 		}
 
 		if (Message.MouseAction && Profile->InDrag) {
+			Message.Processed = true;
+
 			Context.CurrentWindow->Where = { Message.MouseX - Profile->DeltaX, Message.MouseY - Profile->DeltaY };
 		}
 	}
@@ -192,6 +202,12 @@ void PushMessage(void *Message) {
 }
 
 void Begin(HXContext *RenderContext) {
+	for (auto& window : Context.Windows) {
+		delete window;
+	}
+
+	Context.Windows.clear();
+
 	if (Context.Initialized) {
 		Context.Win       = false;
 		Context.LastError = "End is needed for another UI layout progress";
@@ -224,8 +240,8 @@ void CreateTheme() {
 
 void Render() {
 	HXBufferPainter *Painter = Context.RenderContext->DefaultPainter()->CreateFromBuffer(Context.LocalBuffer);
-	for (const auto &window : Context.Windows) {
-		Painter->DrawPainter(window.Painter, window.Where);
+	for (auto window = Context.Windows.rbegin(); window != Context.Windows.rend(); ++window) {
+		Painter->DrawPainter((*window)->Painter, (*window)->Where);
 	}
 }
 
