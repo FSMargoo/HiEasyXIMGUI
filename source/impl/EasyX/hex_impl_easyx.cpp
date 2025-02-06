@@ -34,19 +34,26 @@
 namespace HX {
 void Begin(HXContext *RenderContext);
 
+void OSAPI(HXOSOperation *API);
+
 void HXBegin() {
-	static HXContextImpl context;
+	static HXContextImpl     context;
+	static HXOSOperationImpl api;
 	Begin(&context);
+	OSAPI(&api);
 }
 
 void MessageSender(HXMessageSender *Sender);
+
 void CreateTheme();
+
 void HXInitForEasyX() {
 	HXMessageSenderImpl *sender = new HXMessageSenderImpl;
 	MessageSender(sender);
 
 	CreateTheme();
 }
+
 void *GetHXBuffer(IMAGE *Buffer) {
 	return static_cast<void *>(Buffer);
 }
@@ -241,4 +248,44 @@ namespace HX {
 void *GetHXMessage(ExMessage *Message) {
 	return static_cast<void *>(Message);
 }
+}
+
+void HXOSOperationImpl::SetCursorStyle(HXCursorStyle Style) {
+	switch (Style) {
+	case HXCursorStyle::Normal: {
+		LPCTSTR cursor       = IDC_ARROW;
+		auto    cursorHandle = LoadCursor(NULL, cursor);
+		SetClassLongPtr(GetHWnd(), GCLP_HCURSOR, reinterpret_cast<LPARAM>(cursorHandle));
+
+		break;
+	}
+	case HXCursorStyle::Editing: {
+		LPCTSTR cursor       = IDC_IBEAM;
+		auto    cursorHandle = LoadCursor(NULL, cursor);
+		SetClassLongPtr(GetHWnd(), GCLP_HCURSOR, reinterpret_cast<LPARAM>(cursorHandle));
+
+		break;
+	}
+	case HXCursorStyle::ResizeNW: {
+		LPCTSTR cursor       = IDC_SIZENWSE;
+		auto    cursorHandle = LoadCursor(NULL, cursor);
+		SetClassLongPtr(GetHWnd(), GCLP_HCURSOR, reinterpret_cast<LPARAM>(cursorHandle));
+
+		break;
+	}
+	case HXCursorStyle::ResizeN: {
+		LPCTSTR cursor       = IDC_SIZENS;
+		auto    cursorHandle = LoadCursor(NULL, cursor);
+		SetClassLongPtr(GetHWnd(), GCLP_HCURSOR, reinterpret_cast<LPARAM>(cursorHandle));
+
+		break;
+	}
+	case HXCursorStyle::ResizeE: {
+		LPCTSTR cursor       = IDC_SIZEWE;
+		auto    cursorHandle = LoadCursor(NULL, cursor);
+		SetClassLongPtr(GetHWnd(), GCLP_HCURSOR, reinterpret_cast<LPARAM>(cursorHandle));
+
+		break;
+	}
+	}
 }

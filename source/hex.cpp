@@ -95,6 +95,7 @@ struct HXRuntimeContext {
 	std::vector<HXWindow *> Windows;
 	HXWindow *              CurrentWindow = nullptr;
 	HXContext *             RenderContext = nullptr;
+	HXOSOperation *         OSAPI         = nullptr;
 	void *                  LocalBuffer   = nullptr;
 	HXString                LastError;
 	bool                    Initialized = false;
@@ -113,6 +114,10 @@ HXPoint _ClipToLocalWindowCoord(HXPoint Coord) {
 
 void SetBuffer(void *Buffer) {
 	Context.LocalBuffer = Buffer;
+}
+
+void OSAPI(HXOSOperation *API) {
+	Context.OSAPI = API;
 }
 
 HXString GetLastError() {
@@ -140,12 +145,16 @@ void Window(const HXString &Title, WindowProfile &Profile) {
 	auto windowFoldBar = HXRect{4 + Profile.Position.X, 15 + Profile.Position.Y,
 	                            16 + Profile.Position.X,
 	                            static_cast<HXGInt>(ceil(6 * sqrt(3) + 15)) + Profile.Position.Y};
+	auto windowRectangle = HXRect{
+		Profile.Position.X, Profile.Position.Y, Profile.Position.X + Profile.Size.X, Profile.Position.Y + Profile.Size.Y
+	};
 
-	// Judge the window drag
+	// Judge the window drag operation
 	for (auto &Message : Context.MessageQuery) {
 		if (Message.Processed) {
 			continue;
 		}
+
 		if (Message.MouseLeftPressed &&
 		    Message.MouseX >= windowBarRectangle.Left && Message.MouseX <= windowBarRectangle.Right &&
 		    Message.MouseY >= windowBarRectangle.Top && Message.MouseY <= windowBarRectangle.Bottom) {
@@ -160,9 +169,7 @@ void Window(const HXString &Title, WindowProfile &Profile) {
 			}
 
 			Message.Processed = true;
-		} else if (Message.MouseLeftRelease && Profile.InDrag) {
-			Message.Processed = true;
-
+		} else if (Message.MouseLeftRelease) {
 			Profile.InDrag = false;
 		}
 
@@ -171,7 +178,109 @@ void Window(const HXString &Title, WindowProfile &Profile) {
 
 			Context.CurrentWindow->Where = {Message.MouseX - Profile.DeltaX, Message.MouseY - Profile.DeltaY};
 		}
+
+		if (Profile.Folded) {
+			continue;
+		}
+
+		bool needCursorStyle = false;
+
+		if (Message.MouseLeftRelease && Profile.InCursorStyling) {
+			Profile.InWidthZoom  = false;
+			Profile.InAllZoom    = false;
+			Profile.InHeightZoom = false;
+
+			Profile.InCursorStyling = false;
+			Context.OSAPI->SetCursorStyle(HXCursorStyle::Normal);
+		}
+
+		// Process All Zoom
+		if (Message.MouseAction && Message.MouseX >= windowRectangle.Right - 10 && Message.MouseY >=
+		    windowRectangle.Bottom - 10 &&
+		    Message.MouseX <= windowRectangle.Right && Message.MouseY <= windowRectangle.Bottom) {
+			Message.Processed = true;
+
+			if (Message.MouseLeftPressed) {
+				Profile.InAllZoom = true;
+				Profile.OriginX   = Message.MouseX;
+				Profile.OriginY   = Message.MouseY;
+				Profile.LastSize  = Profile.Size;
+			}
+
+			Profile.InCursorStyling = true;
+			Context.OSAPI->SetCursorStyle(HXCursorStyle::ResizeNW);
+
+			needCursorStyle = true;
+		}
+
+		// Process Width Zoom
+		if (Message.MouseAction && Message.MouseX >= windowRectangle.Right - 10 && Message.MouseY >=
+		    windowRectangle.Top &&
+		    Message.MouseX <= windowRectangle.Right && Message.MouseY <= windowRectangle.Bottom && !Profile.InAllZoom) {
+			Message.Processed = true;
+
+			if (Message.MouseLeftPressed) {
+				Profile.InWidthZoom = true;
+				Profile.OriginX     = Message.MouseX;
+				Profile.OriginY     = Message.MouseY;
+				Profile.LastSize    = Profile.Size;
+			}
+
+			Profile.InCursorStyling = true;
+			if (!needCursorStyle) {
+				Context.OSAPI->SetCursorStyle(HXCursorStyle::ResizeE);
+			}
+
+			needCursorStyle = true;
+		}
+
+		// Process Height Zoom
+		if (Message.MouseAction && Message.MouseX >= windowRectangle.Left && Message.MouseY >=
+		    windowRectangle.Bottom - 10 &&
+		    Message.MouseX <= windowRectangle.Right && Message.MouseY <= windowRectangle.Bottom && !Profile.InAllZoom) {
+			Message.Processed = true;
+
+			if (Message.MouseLeftPressed) {
+				Profile.InHeightZoom = true;
+				Profile.OriginX      = Message.MouseX;
+				Profile.OriginY      = Message.MouseY;
+				Profile.LastSize     = Profile.Size;
+			}
+
+			Profile.InCursorStyling = true;
+			if (!needCursorStyle) {
+				Context.OSAPI->SetCursorStyle(HXCursorStyle::ResizeN);
+			}
+
+			needCursorStyle = true;
+		}
+
+		if (!needCursorStyle && Profile.InCursorStyling) {
+			Profile.InCursorStyling = false;
+			Context.OSAPI->SetCursorStyle(HXCursorStyle::Normal);
+		}
+
+		if (Message.MouseAction && Profile.InAllZoom) {
+			Message.Processed = true;
+
+			Context.CurrentWindow->Size = {Profile.LastSize.X - (Profile.OriginX - Message.MouseX),
+			                               Profile.LastSize.Y - (Profile.OriginY - Message.MouseY)};
+		}
+		if (Message.MouseAction && Profile.InWidthZoom) {
+			Message.Processed = true;
+
+			Context.CurrentWindow->Size = {Profile.LastSize.X - (Profile.OriginX - Message.MouseX),
+			                               Profile.LastSize.Y};
+		}
+		if (Message.MouseAction && Profile.InHeightZoom) {
+			Message.Processed = true;
+
+			Context.CurrentWindow->Size = {Profile.LastSize.X,
+			                               Profile.LastSize.Y - (Profile.OriginY - Message.MouseY)};
+		}
 	}
+
+	Profile.Size = Context.CurrentWindow->Size;
 
 	const auto           rectangleHeight   = static_cast<HXGInt>(ceil(6 * sqrt(3) + 15));
 	std::vector<HXPoint> rectangleVertexes = {

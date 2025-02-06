@@ -134,3 +134,11 @@ public:
 public:
 	HXMessage Message(void *Message) override;
 };
+
+class HXOSOperationImpl : public HXOSOperation {
+public:
+	~HXOSOperationImpl() override = default;
+
+public:
+	void SetCursorStyle(HXCursorStyle Style) override;
+};

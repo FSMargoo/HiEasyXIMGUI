@@ -52,13 +52,26 @@ HXString GetLastError();
  * The profile for a window
  */
 struct WindowProfile {
-	HXPoint Size     = {300, 200};
-	HXPoint Position = {0, 0};
-	bool    InDrag   = false;
-	bool    Folded   = false;
-	HXGInt  DeltaX   = 0;
-	HXGInt  DeltaY   = 0;
+	HXPoint Size            = {300, 200};
+	HXPoint LastSize        = {0, 0};
+	HXPoint Position        = {0, 0};
+	bool    InDrag          = false;
+	bool    Folded          = false;
+	bool    InAllZoom       = false;
+	bool    InWidthZoom     = false;
+	bool    InHeightZoom    = false;
+	bool    InCursorStyling = false;
+	HXGInt  DeltaX          = 0;
+	HXGInt  DeltaY          = 0;
+	HXGInt  OriginX         = 0;
+	HXGInt  OriginY         = 0;
 };
+
+/**
+ * Setting the API of the current OS
+ * @param API The API of the OS
+ */
+void OSAPI(HXOSOperation *API);
 
 /**
  * Creating a window, and select it into the working window,

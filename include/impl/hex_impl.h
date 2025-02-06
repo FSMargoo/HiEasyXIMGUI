@@ -190,7 +190,7 @@ public:
 };
 
 struct HXMessage {
-	bool   Processed		= false;
+	bool   Processed        = false;
 	bool   MouseLeftPressed = false;
 	bool   MouseLeftRelease = false;
 	bool   MouseAction      = false;
@@ -209,4 +209,20 @@ public:
 	 * @return The message translated to the HiEasyX API
 	 */
 	virtual HXMessage Message(void *Message) = 0;
+};
+
+enum class HXCursorStyle {
+	Normal,   // Just normal cursor
+	Editing,  // |
+	ResizeNW, // ↖↘
+	ResizeN,  // ↑↓
+	ResizeE   // ←→
+};
+
+HX_IMPL_API class HXOSOperation {
+public:
+	virtual ~HXOSOperation() = default;
+
+public:
+	virtual void SetCursorStyle(HXCursorStyle Style) = 0;
 };
