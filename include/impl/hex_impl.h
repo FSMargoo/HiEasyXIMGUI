@@ -181,6 +181,7 @@ public:
 };
 
 struct HXMessage {
+	bool   Processed		= false;
 	bool   MouseLeftPressed = false;
 	bool   MouseLeftRelease = false;
 	bool   MouseAction      = false;

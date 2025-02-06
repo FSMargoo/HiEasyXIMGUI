@@ -190,10 +190,12 @@ HXBuffer *HXContextImpl::GetDeviceBuffer() {
 /// HXMessageSenderImpl
 
 HXMessage HXMessageSenderImpl::Message(void *Message) {
-	HXMessage  message{};
-	ExMessage *exMessage = static_cast<ExMessage *>(Message);
-	if (exMessage->message == WM_LBUTTONDOWN || exMessage->message == WM_LBUTTONUP || exMessage->message ==
-	    WM_MOUSEMOVE) {
+	HXMessage message{};
+	auto      exMessage = static_cast<ExMessage *>(Message);
+	if (exMessage->message == WM_LBUTTONDOWN || exMessage->message == WM_LBUTTONUP) {
+		message.MouseAction = true;
+	}
+	if (exMessage->message == WM_MOUSEMOVE) {
 		message.MouseAction = true;
 	}
 	if (exMessage->message == WM_LBUTTONDOWN) {

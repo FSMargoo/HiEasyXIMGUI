@@ -16,18 +16,21 @@ int main() {
 	HX::CreateTheme();
 	HX::MessageSender(&sender);
 
+	HX::WindowProfile windowProfile;
+
 	while (true) {
 		setbkcolor(RGB(0, 129, 129));
 		cleardevice();
 
+		HX::Begin(&context);
+
+		// Begin to process the message
 		ExMessage message{};
 		while (peekmessage(&message)) {
 			HX::PushMessage(HX::GetHXMessage(&message));
 		}
 
-		HX::Begin(&context);
-
-		HX::Window("Hello World");
+		HX::Window("Hello World", &windowProfile);
 
 		HX::End();
 
@@ -38,7 +41,7 @@ int main() {
 
 		FlushBatchDraw();
 
-		Sleep(16);
+		Sleep(1);
 	}
 
 	return 0;

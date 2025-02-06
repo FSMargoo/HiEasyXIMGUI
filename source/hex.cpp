@@ -81,19 +81,23 @@ HXTheme Theme;
  * The runtime context, including all value for UI running
  */
 struct HXRuntimeContext {
-	std::vector<void*>	  MessageQuery;
-	std::vector<HXWindow> Windows;
-	HXWindow *            CurrentWindow = nullptr;
-	HXContext *           RenderContext = nullptr;
-	void *                LocalBuffer   = nullptr;
-	HXString              LastError;
-	bool                  Initialized = false;
-	bool                  Win         = true;
+	std::vector<HXMessage> MessageQuery;
+	std::vector<HXWindow>  Windows;
+	HXWindow *             CurrentWindow = nullptr;
+	HXContext *            RenderContext = nullptr;
+	void *                 LocalBuffer   = nullptr;
+	HXString               LastError;
+	bool                   Initialized = false;
+	bool                   Win         = true;
 };
 
 namespace HX {
 HXRuntimeContext Context;
 HXMessageSender *MsgSender;
+
+HXPoint _ClipToLocalWindowCoord(HXPoint Coord) {
+	return {Coord.X - Context.CurrentWindow->Where.X, Coord.Y - Context.CurrentWindow->Where.Y};
+}
 
 void SetBuffer(void *Buffer) {
 	Context.LocalBuffer = Buffer;
@@ -103,12 +107,14 @@ HXString GetLastError() {
 	return Context.LastError;
 }
 
-void Window(const HXString &Title, bool Folded, HXPoint Size) {
-	Context.Windows.push_back(HXWindow{.Title = Title, .Size = Size, .Where = HXPoint{0, 0}, .Controls{},
-	                                   .Folded = Folded});
+void Window(const HXString &Title, WindowProfile *Profile) {
+	Context.Windows.push_back(HXWindow{.Title = Title, .Size = Profile->Size, .Where = HXPoint{0, 0}, .Controls{},
+	                                   .Folded = Profile->Folded});
 	Context.CurrentWindow = &Context.Windows.back();
 
-	if (Folded == true) {
+	Context.CurrentWindow->Where = Profile->Position;
+
+	if (Profile->Folded) {
 		Context.CurrentWindow->Painter = Context.RenderContext->DefaultPainter()->CreateSubPainter(
 			Context.CurrentWindow->Size.X, 40);
 	} else {
@@ -116,18 +122,61 @@ void Window(const HXString &Title, bool Folded, HXPoint Size) {
 			Context.CurrentWindow->Size.X, Context.CurrentWindow->Size.Y);
 	}
 
+
+	auto windowBarRectangle = HXRect{Profile->Position.X, Profile->Position.Y, Profile->Position.X + Profile->Size.X, Profile->Position.Y + 40};
+	auto windowFoldBar = HXRect{ 4 + Profile->Position.X, 15 + Profile->Position.Y,
+		16 + Profile->Position.X, static_cast<HXGInt>(ceil(6 * sqrt(3) + 15)) + Profile->Position.Y };
+
+	// Judge the window drag
+	for (auto &Message : Context.MessageQuery) {
+		if (Message.MouseLeftPressed &&
+		    Message.MouseX >= windowBarRectangle.Left && Message.MouseX <= windowBarRectangle.Right &&
+		    Message.MouseY >= windowBarRectangle.Top && Message.MouseY <= windowBarRectangle.Bottom) {
+			if (Message.MouseX >= windowFoldBar.Left && Message.MouseX <= windowFoldBar.Right &&
+				Message.MouseY >= windowFoldBar.Top && Message.MouseY <= windowBarRectangle.Bottom) {
+				Profile->Folded = !Profile->Folded;
+			}
+			else {
+				Profile->DeltaX = Message.MouseX - windowBarRectangle.Left;
+				Profile->DeltaY = Message.MouseY - windowBarRectangle.Top;
+
+				Profile->InDrag = true;
+			}
+		}
+		else if (Message.MouseLeftRelease && Profile->InDrag) {
+			Profile->InDrag = false;
+		}
+
+		if (Message.MouseAction && Profile->InDrag) {
+			Context.CurrentWindow->Where = { Message.MouseX - Profile->DeltaX, Message.MouseY - Profile->DeltaY };
+		}
+	}
+
+	const auto rectangleHeight = static_cast<HXGInt>(ceil(6 * sqrt(3) + 15));
+	std::vector<HXPoint> rectangleVertexes = {
+		{4, 15 },
+		{16, 15 },
+		{10, rectangleHeight },
+	};
+	if (Profile->Folded) {
+		rectangleVertexes = {
+			{4, rectangleHeight },
+			{16, rectangleHeight },
+			{10, 15 },
+		};
+	}
+	windowBarRectangle = HXRect{0, 0, Profile->Size.X, 40};
+
 	// Draw Title Bar
 	Context.CurrentWindow->Painter->Begin();
 	Context.CurrentWindow->Painter->Clear(Theme.WindowBackground);
-	Context.CurrentWindow->Painter->DrawFilledRectangle({0, 0, Size.X, 40}, Theme.WindowTitleBackground,
+	Context.CurrentWindow->Painter->DrawFilledRectangle(windowBarRectangle, Theme.WindowTitleBackground,
 	                                                    Theme.WindowTitleBackground);
-	Context.CurrentWindow->Painter->DrawFilledPolygon({
-		                                                  {4, 15},
-		                                                  {16, 15},
-		                                                  {10, static_cast<HXGInt>(ceil(6 * sqrt(3) + 15))}
-	                                                  }, Theme.WindowTitle);
-	Context.CurrentWindow->Painter->DrawText(Title, HXFont{}, {20, 10}, Theme.WindowTitle, 20);
+	Context.CurrentWindow->Painter->DrawFilledPolygon(rectangleVertexes, Theme.WindowTitle);
+	Context.CurrentWindow->Painter->DrawText(Title, HXFont{}, {20, 10 }, Theme.WindowTitle, 20);
 	Context.CurrentWindow->Painter->End();
+
+	Profile->Position = Context.CurrentWindow->Where;
 }
 
 void MessageSender(HXMessageSender *Sender) {
@@ -139,7 +188,7 @@ void MessageSender(HXMessageSender *Sender) {
 }
 
 void PushMessage(void *Message) {
-	Context.MessageQuery.push_back(Message);
+	Context.MessageQuery.push_back(MsgSender->Message(Message));
 }
 
 void Begin(HXContext *RenderContext) {
@@ -149,6 +198,7 @@ void Begin(HXContext *RenderContext) {
 	} else {
 		Context               = HXRuntimeContext{};
 		Context.RenderContext = RenderContext;
+		Context.Initialized   = true;
 	}
 }
 

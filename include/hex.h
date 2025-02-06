@@ -49,20 +49,24 @@ void SetBuffer(void *Buffer);
 HXString GetLastError();
 
 /**
- * Creating a window, and select it into the working window,
- * the window will locate at the origin point by default. The
- * size of the window by default is 200x300
- * @param Title The title of the window
- * @param Folded Whether the window is folded, setting as true to fold the window
- * @param Size The size of the window
+ * The profile for a window
  */
-void Window(const HXString &Title, bool Folded = false, HXPoint Size = {200, 300});
+struct WindowProfile {
+	HXPoint Size     = {300, 200};
+	HXPoint Position = {0, 0};
+	bool    InDrag   = false;
+	bool    Folded   = false;
+	HXGInt  DeltaX   = 0;
+	HXGInt  DeltaY   = 0;
+};
 
 /**
- * Relocating the window
- * @param Where Where the window will locate
+ * Creating a window, and select it into the working window,
+ * the window will locate at the origin point by default.
+ * @param Title The title of the window
+ * @param Profile The profile for a window
  */
-void WindowLocate(HXPoint Where);
+void Window(const HXString &Title, WindowProfile *Profile);
 
 void Button(const HXString &Title);
 
@@ -81,6 +85,7 @@ void MessageSender(HXMessageSender *Sender);
 /**
  * Pushing the message to the message query
  * @param Message The message to be pushed
+ * @param Size The size of the message structure
  */
 void PushMessage(void *Message);
 
